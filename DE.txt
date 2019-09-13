@@ -1,0 +1,210 @@
+
+
+Задание 1:
+	В системе имеются следующие базы данных с сущностями (в скобках указаны основные (необходимые) столбцы):
+	  DB default
+	      tb_users (uid, registration_date, country, ...) - клиенты
+				tb_logins (user_uid, login, account_type: real/demo, ...) - счета клиентов - связь один клиент ко многим счетам
+	  DB billing
+	      tb_operations (operation_type: deposit/withdrawal, operation_date, login, amount (в USD), ...)
+	  DB orderstat
+	      tb_orders (login, order_close_date, ...)
+
+	Результаты оформить в виде последовательных SQL-выражений с комментариями.
+
+	Задачи:
+	1. Создать структуру БД, наполнить тестовыми данными.
+	
+	CREATE SCHEMA "default"; -- видимо, имебются в виду не БД, а схемы, т.к. разнесение связанных сущностей по разным БД нецелесообразно
+	
+	CREATE TABLE "default".tb_users (
+		uid                 bigserial PRIMARY KEY ,
+		registration_date   date,
+		country             varchar(100)
+	);
+	
+	CREATE TABLE "default".tb_logins (
+		user_uid            bigint REFERENCES "default".tb_users (uid),
+		login               varchar(50) UNIQUE,
+		account_type       varchar(10),
+		CONSTRAINT user_uid_login PRIMARY KEY(user_uid,login,account_type)
+	);
+	
+	CREATE SCHEMA billing; 
+	
+	CREATE TABLE billing.tb_operations (
+		id		  			bigserial PRIMARY KEY ,
+		operation_type      char(20), 
+		operation_date      date,
+		login               varchar(50) REFERENCES "default".tb_logins (login), --Странно, что по  условию задания в структуре этой таблицы ссылка на пользователя идет через login, а не через uid, но оставим как указано. Поле uid добавлять не будем, так как это нарушит 3 нормальную форму
+		amount				numeric
+	);
+	
+	CREATE SCHEMA orderstat;
+	
+	CREATE TABLE orderstat.tb_orders (
+		id		  			bigserial PRIMARY KEY ,
+		login               varchar(50) REFERENCES "default".tb_logins (login),  --Странно, что по  условию задания в структуре этой таблицы ссылка на пользователя идет через login, а не через uid, но оставим как указано. Поле uid добавлять не будем, так как это нарушит 3 нормальную форму
+		order_close_date	date
+	);
+
+
+	
+	
+	INSERT INTO "default".tb_users  (registration_date, country) VALUES
+    ('2019-07-01', 'Russia'),
+    ('2019-07-02', 'Russia'),
+    ('2019-07-03', 'USA'),
+    ('2019-07-03', 'Canada'),
+    ('2019-07-04', 'Mexico'),
+    ('2019-07-05', 'UK'),
+    ('2019-07-06', 'UK'),
+    ('2019-07-07', 'UK'),
+    ('2019-07-08', 'Russia'),
+    ('2019-07-09', 'Russia'),
+    ('2019-07-10', 'Russia'),
+    ('2019-07-10', 'Canada'),
+    ('2019-07-11', 'Mexico'),
+    ('2019-07-11', 'USA'),
+    ('2019-07-12', 'USA')
+    ; 
+
+	INSERT INTO "default".tb_logins  (user_uid , login, account_type) VALUES
+     (1, 'user_1', 'real'),
+    (1, 'user_1_d', 'demo'),
+    (2, 'user_2', 'real'),
+    (3, 'user_3', 'real'),
+    (4, 'user_4', 'real'),
+    (4, 'user_4_d', 'demo'),
+    (5, 'user_5_d', 'demo'),
+    (6, 'user_6', 'real'),
+    (7, 'user_7_d', 'demo'),
+    (8, 'user_8', 'real'),
+    (8, 'user_8_d', 'demo'),
+    (9, 'user_9', 'real'),
+    (10, 'user_10', 'real'),
+    (10, 'user_10_d', 'demo'),
+    (11, 'user_11', 'real'),
+    (12, 'user_12', 'real'),
+    (13, 'user_13', 'real'),
+    (13, 'user_13_d', 'demo'),
+    (14, 'user_14', 'real'),
+    (15, 'user_15', 'real')
+	;
+	
+   	
+	 INSERT INTO billing.tb_operations  (operation_type, operation_date, login, amount) VALUES
+    ('deposit', '2019-08-13', 'user_1', 200),
+    ('deposit', '2019-08-14', 'user_1_d', 1000),
+    ('withdrawal', '2019-08-23', 'user_1', 100),
+    ('deposit', '2019-08-01', 'user_2', 1234),
+    ('deposit', '2019-08-04', 'user_3', 1300),
+    ('withdrawal', '2019-08-07', 'user_3', 1560),
+    ('deposit', '2019-08-20', 'user_4', 5000),
+    ('deposit', '2019-08-21', 'user_4_d', 1200),
+    ('deposit', '2019-08-12', 'user_5_d', 4000),
+    ('deposit', '2019-08-11', 'user_6', 1000),
+    ('withdrawal', '2019-08-11', 'user_6', 3500),
+    ('deposit', '2019-08-01', 'user_7_d', 900),
+    ('deposit', '2019-08-01', 'user_8', 500),
+    ('deposit', '2019-08-04', 'user_9', 200),
+    ('deposit', '2019-08-03', 'user_10', 1400),
+    ('withdrawal', '2019-08-05', 'user_10', 1500),
+    ('deposit', '2019-08-04', 'user_11', 1234),
+    ('deposit', '2019-08-01', 'user_12', 999)
+    ; 
+   
+   
+	  INSERT INTO orderstat.tb_orders  (login, order_close_date) VALUES
+      ('user_1', '2019-09-02'),
+    ('user_1', '2019-09-03'),
+    ('user_1', '2019-09-04'),
+	('user_2', '2019-09-02'),
+	('user_2', '2019-09-03'),
+	('user_3', '2019-09-04'),
+	('user_3', '2019-09-05'),
+	('user_3', '2019-09-01'),
+	('user_3', '2019-09-01'),
+	('user_4', '2019-09-10'),
+	('user_4', '2019-09-11'),
+	('user_4_d', '2019-09-02'),
+	('user_5_d', '2019-09-01'),
+	('user_6', '2019-09-06'),
+	('user_8', '2019-09-07'),
+	('user_8', '2019-09-08'),
+	('user_8', '2019-09-09'),
+	('user_9', '2019-09-10'),
+	('user_10', '2019-09-04'),
+	('user_10', '2019-09-04')
+	;
+	2. Написать запрос, который отобразит среднее время перехода пользователей между этапами воронки:
+	  - От регистрации до внесения депозита
+	  - От внесения депозита до первой сделки на реальном счёте
+	Только реальные счета
+	Учесть, что у пользователя может быть депозит, но не быть торговых операций
+	Период - последние 90 дней
+	Группировка - по странам
+	Сортировка - по убыванию количества пользователей
+	
+	
+	
+
+	with foo as (  -- Здесь нужно уточнить требования по этапам воронки с учетом того, что депозитом может быть несколько: 1. от регистрации до какого депозита (первого, последнего)? 2.От внесения депозита (какого первого, последнего?) до первой сделки
+	select  u.country, sum(u.uid) as users_num, avg(op.operation_date - u.registration_date) as avg_reg_depo_days , avg(o.order_close_date - op.operation_date) as avg_depo_order_days 
+		from "default".tb_users u 
+		join "default".tb_logins l on u.uid = l.user_uid
+		join billing.tb_operations op on l.login = op.login
+		left join orderstat.tb_orders o on op.login = o.login  
+	where op.operation_type = 'deposit'
+	and l.account_type = 'real'
+	and  current_date - u.registration_date  < 90
+	group by u.country)
+		select * from foo
+		order by foo.users_num desc
+	
+	3. Написать запрос, который отобразит количество всех клиентов по странам, у которых средний депозит >=1000
+		
+	Вывод: country, количество клиентов в стране, количество клиентов у которых депозит >=1000
+	
+	with countries as (
+	select  u.country, sum(u.uid) as total_users_num, avg(op.amount) as avg_deposit -- Находим страны, у которых средний депозит >=1000 и кол-во клиентов в стране
+		from "default".tb_users u 
+		join "default".tb_logins l on u.uid = l.user_uid
+		join billing.tb_operations op on l.login = op.login
+	where op.operation_type = 'deposit'
+	group by u.country
+	having avg(op.amount) >= 1000)
+		select u.country, c.total_users_num, count(u.uid) as users_depo_1000 -- Находим кол-во клиентов из выбранных стран, у которых депозит >=1000
+			from "default".tb_users u 
+			join countries c on c.country = u.country
+			join "default".tb_logins l on u.uid = l.user_uid
+			join billing.tb_operations op on l.login = op.login
+		where op.operation_type = 'deposit'
+		and op.amount >= 1000
+		group by u.country, c.total_users_num
+	
+	
+	4. Написать запрос, который выводит первые 3 депозита каждого клиента.
+	Вывод: uuid, login, operation_date, порядковый номер депозита
+	
+	select * from
+		(select  u.uid, l.login,  op.operation_date, rank() over (partition by uid order by 	op.operation_date) as pos
+			from "default".tb_users u 
+			join "default".tb_logins l on u.uid = l.user_uid
+			join billing.tb_operations op on l.login = op.login
+		where op.operation_type = 'deposit'
+		) as foo
+	where pos <= 3
+
+
+Задание 2:
+    1. На любом языке программирования реализовать реконсиляцию транзакций клиентов банка из двух источников (как минимум один - таблица БД, второй на выбор). 
+	В данных должен присутствовать уникальный ключ - uid/id на выбор;
+	Реконсиляция должна быть масштабируема и применима к Big Data
+	
+	Дополнительно сделать реконсиляцию:
+	- для разных типов данных (дата, текст, числа)
+	- для числовых данных должна быть возможность сконфигурировать толеранс (допустимую погрешность в %)
+
+    2. На любом языке программирования реализовать сервис по сбору агрегатов из таблицы БД с банковскими транзакциями.
+    Агрегаты должны быть собраны из реконсилированных данных по каждому клиенту в разрезах дней, месяцев и общий итог.
