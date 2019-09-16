@@ -13,8 +13,10 @@ import test_2_1_map_reduce #импортируем и выполняем рек�
 conn = psycopg2.connect(dbname='postgres', user='root', host='localhost')
 cursor = conn.cursor()
 
-#Получаем агрегированные данные
-cursor.execute('SELECT user_guid, EXTRACT("year" FROM transaction_date), EXTRACT("month" FROM transaction_date), SUM(transaction_amount) FROM test_2_1.transactions GROUP BY user_guid, EXTRACT("year" FROM transaction_date), EXTRACT("month" FROM transaction_date) ORDER BY user_guid, EXTRACT("year" FROM transaction_date), EXTRACT("month" FROM transaction_date);')
+#Получаем агрегированные данные, сгруппированные  по пользователю, году и месяцу: сумму транзакций, минимальное, максимальное и среднее значение транзакции
+cursor.execute('SELECT user_guid, EXTRACT("year" FROM transaction_date), EXTRACT("month" FROM transaction_date), SUM(transaction_amount), MIN(transaction_amount), MAX(transaction_amount), AVG(transaction_amount) '
+               'FROM test_2_1.transactions '
+               'GROUP BY user_guid, EXTRACT("year" FROM transaction_date), EXTRACT("month" FROM transaction_date) ORDER BY user_guid, EXTRACT("year" FROM transaction_date), EXTRACT("month" FROM transaction_date);')
 records = cursor.fetchall()
 for record in records:
     print(record)
